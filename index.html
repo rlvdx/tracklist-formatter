@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NML to Tracklist</title>
+</head>
+
+<body>
+    <div>
+        <input type="file" id="input" onchange="readFile(this.files)">
+
+        <button id="copy">Copy to clipboard</button>
+    </div>
+
+    <div>
+        <pre id="result"></pre>
+    </div>
+
+    <script>
+        function copyTrackListToClipboard() {
+            var textArea = document.createElement('textarea');
+            var textToCopy = document.querySelector('#result');
+
+            textArea.value = textToCopy.innerText;
+            document.body.appendChild(textArea);
+            textArea.select()
+            
+            document.execCommand('copy');
+
+            document.body.removeChild(textArea);
+        }
+
+        document.querySelector('#copy').addEventListener('click', copyTrackListToClipboard);
+
+        function readFile(files) {
+            var fileReader = new FileReader();
+            fileReader.onload = function (event) {
+                parseNML(fileReader.result);
+            };
+            fileReader.readAsText(files[0]);
+        }
+
+        function parseNML(string) {
+            var parser = new DOMParser();
+            var tracklist = parser.parseFromString(string, 'application/xml');
+
+            var nsResolver = tracklist.createNSResolver(tracklist.documentElement);
+            var collectionEntries = tracklist.evaluate('/NML/COLLECTION/ENTRY', tracklist, nsResolver, XPathResult
+                .ANY_TYPE, null);
+            var playlistEntries = tracklist.evaluate(
+                '/NML/PLAYLISTS/NODE/SUBNODES/NODE/SUBNODES/NODE/PLAYLIST/ENTRY/PRIMARYKEY', tracklist, nsResolver,
+                XPathResult.ANY_TYPE, null);
+
+            var tracks = {};
+            while (entry = collectionEntries.iterateNext()) {
+                tracks[entry.children[0].getAttribute('FILE')] = {
+                    'artist': entry.getAttribute('ARTIST'),
+                    'title': entry.getAttribute('TITLE'),
+                };
+            }
+
+            var playlist = [];
+            while (entry = playlistEntries.iterateNext()) {
+                playlist.push(entry.getAttribute('KEY').split(':').pop());
+            }
+
+            var orderedTracklist = [];
+            playlist.forEach((filename) => {
+                orderedTracklist.push(tracks[filename]);
+            });
+
+            var formatted = orderedTracklist.map((track, index) => {
+                index += 1;
+                index = index < 10 ? '0' + index : index;
+                return `${index} - ${track.artist} - ${track.title}`;
+            });
+
+            var formattedText = formatted.reduce((previousValue, currentValue, index) => {
+                return `${previousValue}\n${currentValue}`;
+            });
+
+            document.getElementById('result').innerText = formattedText;
+        }
+    </script>
+</body>
+
+</html>
