@@ -50,7 +50,7 @@
             var collectionEntries = tracklist.evaluate('/NML/COLLECTION/ENTRY', tracklist, nsResolver, XPathResult
                 .ANY_TYPE, null);
             var playlistEntries = tracklist.evaluate(
-                '/NML/PLAYLISTS/NODE/SUBNODES/NODE/SUBNODES/NODE/PLAYLIST/ENTRY/PRIMARYKEY', tracklist, nsResolver,
+                '/NML/PLAYLISTS//PLAYLIST/ENTRY/PRIMARYKEY', tracklist, nsResolver,
                 XPathResult.ANY_TYPE, null);
 
             var tracks = {};
